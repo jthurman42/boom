@@ -26,6 +26,7 @@ import (
 
 type result struct {
 	err           error
+	keepAlive     bool
 	statusCode    int
 	duration      time.Duration
 	contentLength int64

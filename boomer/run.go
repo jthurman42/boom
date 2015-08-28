@@ -57,10 +57,12 @@ func (b *Boomer) worker(wg *sync.WaitGroup, ch chan *http.Request) {
 		s := time.Now()
 		code := 0
 		size := int64(0)
+		keepalive := false
 		resp, err := client.Do(req)
 		if err == nil {
 			size = resp.ContentLength
 			code = resp.StatusCode
+			keepalive = !resp.Close
 			resp.Body.Close()
 		}
 		if b.bar != nil {
@@ -70,6 +72,7 @@ func (b *Boomer) worker(wg *sync.WaitGroup, ch chan *http.Request) {
 
 		b.results <- &result{
 			statusCode:    code,
+			keepAlive:     keepalive,
 			duration:      time.Now().Sub(s),
 			err:           err,
 			contentLength: size,

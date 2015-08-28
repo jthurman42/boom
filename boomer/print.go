@@ -26,11 +26,12 @@ const (
 )
 
 type report struct {
-	avgTotal float64
-	fastest  float64
-	slowest  float64
-	average  float64
-	rps      float64
+	avgTotal  float64
+	fastest   float64
+	slowest   float64
+	average   float64
+	rps       float64
+	keepAlive int64
 
 	results chan *result
 	total   time.Duration
@@ -67,6 +68,9 @@ func (r *report) finalize() {
 				if res.contentLength > 0 {
 					r.sizeTotal += res.contentLength
 				}
+				if res.keepAlive {
+					r.keepAlive++
+				}
 			}
 		default:
 			r.rps = float64(len(r.lats)) / r.total.Seconds()
@@ -89,14 +93,15 @@ func (r *report) print() {
 		r.fastest = r.lats[0]
 		r.slowest = r.lats[len(r.lats)-1]
 		fmt.Printf("\nSummary:\n")
-		fmt.Printf("  Total:\t%4.4f secs.\n", r.total.Seconds())
-		fmt.Printf("  Slowest:\t%4.4f secs.\n", r.slowest)
-		fmt.Printf("  Fastest:\t%4.4f secs.\n", r.fastest)
-		fmt.Printf("  Average:\t%4.4f secs.\n", r.average)
-		fmt.Printf("  Requests/sec:\t%4.4f\n", r.rps)
+		fmt.Printf("  Total:                      %4.4f secs.\n", r.total.Seconds())
+		fmt.Printf("  Slowest:                    %4.4f secs.\n", r.slowest)
+		fmt.Printf("  Fastest:                    %4.4f secs.\n", r.fastest)
+		fmt.Printf("  Average:                    %4.4f secs.\n", r.average)
+		fmt.Printf("  Requests/sec:               %4.4f\n", r.rps)
+		fmt.Printf("  Keep-Alive Requests:        %d\n", r.keepAlive)
 		if r.sizeTotal > 0 {
-			fmt.Printf("  Total Data Received:\t%d bytes.\n", r.sizeTotal)
-			fmt.Printf("  Response Size per Request:\t%d bytes.\n", r.sizeTotal/int64(len(r.lats)))
+			fmt.Printf("  Total Data Received:        %d bytes.\n", r.sizeTotal)
+			fmt.Printf("  Response Size per Request:  %d bytes.\n", r.sizeTotal/int64(len(r.lats)))
 		}
 		r.printStatusCodes()
 		r.printHistogram()
